@@ -53,6 +53,7 @@
         });
         $('form#chat-form').submit(function(){
           let message = $('#m').val()
+          $('#messages').append($('<li>').text(username + ": " + message));
           socket.emit('chat message', {message, username});
           $('#m').val('');
           return false;

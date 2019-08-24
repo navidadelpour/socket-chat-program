@@ -10,17 +10,39 @@ app.get('/', function(req, res){
 var connected_users = []
 
 io.on('connection', function(socket){
-  let username = ""
-  socket.on('user nickname', function(name){
+  let _user = {username: "", online: false}
+
+  socket.on('user nickname', function(user){
+    _user = user
     socket.emit('connected', connected_users)
-    io.emit('user connected', name)
-    connected_users.push(name)
-    username = name
+    io.emit('user connected', _user)
+    connected_users.push(_user)
   })
+
   socket.on('disconnect', function() {
-    io.emit('user disconnected', username)
-    connected_users.splice(connected_users.indexOf(username), 1)
+    io.emit('user disconnected', _user)
+    connected_users.splice(connected_users.indexOf(_user), 1)
   }) 
+
+  socket.on('user online', function(user) {
+    let u = connected_users.find(function(u) {
+      return u.username === user.username
+    })
+    if(u) {
+      u.online = true
+      io.emit('online', user.username)
+    }
+  })
+
+  socket.on('user offline', function(user) {
+    let u = connected_users.find(function(u) {
+      return u.username === user.username
+    })
+    if(u) {
+      u.online = false
+      io.emit('offline', user.username)
+    }
+  })
 
   socket.on('chat message', function(msg){
     io.emit('chat message', msg);

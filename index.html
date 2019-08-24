@@ -12,22 +12,56 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
       #messages { margin-bottom: 40px }
+      .get-nickname { position: fixed;left: 0;right: 0;top: 0;bottom: 0;background: black;color: white; }
+      .get-nickname > div { width: 60%;margin: 0 auto;text-align: center;margin-top: 10%; }
+      .get-nickname h1 { margin-bottom: 30px; }
+      .col { width: 49%; display: inline-block; }
     </style>
   </head>
   <body>
-    <ul id="messages"></ul>
-    <form action="">
+    <ul id="messages" class='col'></ul>
+    <ul id="users" class='col'></ul>
+    
+    <form action="" id="chat-form">
       <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <form action="" id="nickname-form">
+      <div class="get-nickname">
+        <div>
+          <h1>enter your nickname</h1>
+          <input id="n" autocomplete="off"><button>Submit</button>
+        </div>
+      </div>
     </form>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       $(function () {
         var socket = io();
-        $('form').submit(function(){
+        var connected = false;
+        $('form#nickname-form').submit(function() {
+          var username = $("#n").val()
+          socket.emit('user nickname', username)
+          $('#n').val('');
+          $("#nickname-form").remove()
+          connected = true
+          return false
+        });
+        $('form#chat-form').submit(function(){
           socket.emit('chat message', $('#m').val());
           $('#m').val('');
           return false;
+        });
+        socket.on('connected', function(names) {
+          names.map(name => {
+            $('#users').append($('<li>').text(name));
+          })
+        })
+        socket.on('user disconnected', function(name) {
+          $('#users li:contains("'+name+'")').remove();
+        })
+        socket.on('user connected', function(name){
+          if(connected) $('#users').append($('<li>').text(name));
         });
         socket.on('chat message', function(msg){
           $('#messages').append($('<li>').text(msg));
